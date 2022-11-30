@@ -48,7 +48,7 @@ export default function myExample () {
 
 同时在不同的阶段会执行对应的插件钩子函数(Hook)。
 
-所以，记忆并理解rollup的插件钩子函数是学习rollup plugin的主要方向。
+所以，记忆并理解rollup的插件钩子函数是学习rollup plugin的重要方向。
 
 ## 5. 整体
 
@@ -122,7 +122,126 @@ export default function myExample () {
 
 （15）closeBundle:  并行钩子，打包结束。
 
+## 8. 实战
 
+下面 是 rollup插件 @rollup/plugin-alias的源码，功能：设置路径的别名。
 
+```js
+// 判断路径是否匹配
+function matches(pattern, importee) {
+    if (pattern instanceof RegExp) {
+        return pattern.test(importee);
+    }
+    if (importee.length < pattern.length) {
+        return false;
+    }
+    if (importee === pattern) {
+        return true;
+    }
+    // eslint-disable-next-line prefer-template
+    return importee.startsWith(pattern + '/');
+}
 
+function getEntries({
+    entries, 
+    customResolver // 自定义路径解析方法
+}) {
+    if (!entries) {
+        return [];
+    }
+    const resolverFunctionFromOptions = resolveCustomResolver(customResolver);
+    if (Array.isArray(entries)) {
+        return entries.map((entry) => {
+            return {
+                find: entry.find,
+                replacement: entry.replacement,
+                resolverFunction: resolveCustomResolver(entry.customResolver) || resolverFunctionFromOptions
+            };
+        });
+    }
+  	// 解析成一个对象，例如路径中’@‘->'./src'
+    return Object.entries(entries).map(([key, value]) => {
+        return {
+            find: key,
+            replacement: value,
+            resolverFunction: resolverFunctionFromOptions
+        };
+    });
+}
 
+function getHookFunction(hook) {
+    if (typeof hook === 'function') {
+        return hook;
+    }
+    if (hook && 'handler' in hook && typeof hook.handler === 'function') {
+        return hook.handler;
+    }
+    return null;
+}
+
+function resolveCustomResolver(customResolver) {
+    if (typeof customResolver === 'function') {
+        return customResolver;
+    }
+    if (customResolver) {
+        return getHookFunction(customResolver.resolveId);
+    }
+    return null;
+}
+
+function alias(options = {}) {
+    const entries = getEntries(options);
+    if (entries.length === 0) {
+        return {
+            name: 'alias',
+            resolveId: () => null
+        };
+    }
+    return {
+        name: 'alias',
+        async buildStart(inputOptions) {
+            await Promise.all([...(Array.isArray(options.entries) ? options.entries : []), options].map(({
+                customResolver
+            }) => {
+                var _a;
+                return customResolver && ((_a = getHookFunction(customResolver.buildStart)) === null || _a === void 0 ? void 0 : _a.call(this, inputOptions));
+            }));
+        },
+        resolveId(importee, importer, resolveOptions) {
+          /*
+importee，当前资源路径（import ‘xx’语句中的xx原始字符串）
+importer，被哪个模块导入的，父模块的路径（一般是绝对路径，如果importee是入口文件，则该值为undefined。表示没有父模块导入它）。
+resolveOptions，可能用到的一些配置。比如isEntry: boolean，当前impotee文件是不是入口文件之类的。
+*/
+            if (!importer) {
+                return null;
+            }
+            // First match is supposed to be the correct one
+            const matchedEntry = entries.find((entry) => matches(entry.find, importee));
+            if (!matchedEntry) {
+                return null;
+            }
+          	//匹配成功，路径替换
+            const updatedId = importee.replace(matchedEntry.find, matchedEntry.replacement);
+       		// resolverFunction对应选项中的customResolver，自定义的路径解析算法
+            if (matchedEntry.resolverFunction) {
+                return matchedEntry.resolverFunction.call(this, updatedId, importer, resolveOptions);
+            }
+          	// this.resolve是rollup自带的路径解析算法，返回一个资源对象
+            return this.resolve(updatedId, importer, Object.assign({
+                skipSelf: true
+            }, resolveOptions)).then((resolved) => resolved || {
+                id: updatedId
+            });
+        }
+    };
+}
+
+export {
+    alias as
+    default
+};
+//# sourceMappingURL=index.js.map
+```
+
+![img](./p1.png)
