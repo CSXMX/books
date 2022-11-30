@@ -244,4 +244,4 @@ export {
 //# sourceMappingURL=index.js.map
 ```
 
-![img](./p1.png)
+![img](./img/p1.png)
