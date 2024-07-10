@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // main.js
+    let worker = new Worker('./fork/web_worker.js');
+    worker.postMessage(1000);  // 发送数据给worker
+    console.time('计算耗时');
+    worker.onmessage = function (event) {
+        console.log('Received result from worker:', event.data);
+        console.timeEnd('计算耗时')
+    };
+
+</script>
+
+</html>
