@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    答案是
+
+    第一轮宏任务
+    start
+    promise start
+    promise end
+    async
+    fn2
+    fn3
+    fn4
+    end
+
+    一次清空微任务队列
+    promise1,
+    promise2,
+    fn2 end,
+
+
+    清空完后，加入新的微任务
+    promise3
+    end2 
+    fn4
+
+
+</body>
+<script>
+    console.log("start"); // 1
+    const p = new Promise((resolve, reject) => {
+        console.log("promise start"); // 2
+        resolve();
+        console.log("promise end"); // 3
+    })
+        .then(() => {
+            console.log("promise1"); // 微任务push promise1,promise2
+        })
+        .then(() => {
+            console.log("promise2");
+        })
+        .then(() => {
+            console.log("promise3");
+        })
+        .then(() => {
+            console.log("promise4");
+        })
+        .then(() => {
+            console.log("promise5");
+        })
+    const fn2 = async function () {
+        console.log("fn2"); //5
+        await fn3();
+        console.log("fn2 end"); // 微任务push promise1,promise2,fn2 end"
+    };
+    const fn3 = async function () {
+        console.log("fn3"); // 6
+        await fn4();
+    };
+    const fn4 = async () => {
+        console.log("fn4"); // 7
+    };
+    const fn = async function () {
+        console.log("async"); // 4
+        await fn2();
+        console.log("end2"); // 微任务push promise1,promise2,fn2 end,end2"
+        await fn4();
+    };
+    fn();
+    console.log("end"); //8
+
+</script>
+
+</html>
