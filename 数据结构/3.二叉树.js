@@ -43,7 +43,7 @@ function createTree(arr) {
   }
   return root;
 }
-const tree = createTree([1, 2, 3, 4, 5]);
+const tree = createTree([1, 2, 3, 4, 5, 6, 7, 8]);
 // console.log(tree, levelOrder(tree));
 
 // 只根据先序遍历创建不了唯一的二叉树
@@ -148,3 +148,4 @@ function endOrder2(root) {
 console.log("先序遍历【非递归版】", preOrder2(tree));
 console.log("中序遍历【非递归版】", inOrder2(tree));
 console.log("后序遍历【非递归版】", endOrder2(tree));
+console.log("层次遍历", levelOrder(tree));
