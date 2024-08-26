@@ -33,19 +33,21 @@ class Scheduler {
 
   async start(task) {
     this.count++; // 增加当前执行中的任务数
+
     this.consumerQueue.push(task); // 添加任务到消费队列
     try {
       const result = await task(); // 执行任务
       task.resolve(result); // 解析结果
     } catch (error) {
       task.reject(error); // 拒绝并传递错误
-    } finally {
-      this.consumerQueue = this.consumerQueue.filter(consumer => consumer !== task); // 从消费队列中移除已完成的任务
-      this.count--; // 减少当前执行中的任务数
-      // 如果任务队列中有等待的任务，则启动下一个任务
-      if (this.taskQueue.length > 0) {
-        this.start(this.taskQueue.shift());
-      }
+    }
+
+    this.consumerQueue = this.consumerQueue.filter(consumer => consumer !== task); // 从消费队列中移除已完成的任务
+    this.count--; // 减少当前执行中的任务数
+
+    // 如果任务队列中有等待的任务，则启动下一个任务
+    if (this.taskQueue.length > 0) {
+      this.start(this.taskQueue.shift());
     }
   }
 }
